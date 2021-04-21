@@ -1,5 +1,5 @@
-#include "../../cpp/Result.hpp"
-#include "../../cpp/String.hpp"
+#include <Result.hpp>
+#include <String.hpp>
 
 struct S
 {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Utility.hpp"
+#include "_XUtility.hpp"
 #include "Allocator.hpp"
 
 namespace hsd
@@ -40,11 +41,11 @@ namespace hsd
                     : Allocator<value_type>(alloc), _size{size}
                 {
                     this->_data = this->allocate(size);
-                    std::construct_at(this->_data);
+                    alloc_type::construct_at(this->_data);
 
                     for(usize _index = 0; _index < size; _index++)
                     {
-                        std::construct_at(&this->_data[_index]);
+                        alloc_type::construct_at(&this->_data[_index]);
                     }
                 }
 
@@ -289,7 +290,7 @@ namespace hsd
             shared_detail::storage<T, Allocator> _value;
             shared_detail::counter<Allocator> _count;
 
-            template <typename U, template <typename> typename Del>
+            template <typename U, template <typename> typename Alloc>
             friend class shared_ptr;
 
             HSD_CONSTEXPR void _delete()
@@ -300,6 +301,17 @@ namespace hsd
 
                     if(*_count == 0)
                     {
+                        if (get() != nullptr) {
+                            if constexpr (is_array<T>::value)
+                            {
+                                for (usize i = 0, size = _value.get_size(); i < size; ++i)
+                                    _destroy_inplace(get()[size-i]);
+                            }
+                            else
+                            {
+                                _destroy_inplace(*get());
+                            }
+                        }
                         _value.get_allocator().deallocate(
                             _value.get_pointer(), _value.get_size());
                         _count.get_allocator().deallocate(
@@ -452,7 +464,7 @@ namespace hsd
         {
             Allocator<remove_array_t<T>> _alloc;
             auto* _ptr = _alloc.allocate(1).unwrap();
-            construct_at(_ptr, forward<Args>(args)...);
+            _alloc.construct_at(_ptr, forward<Args>(args)...);
             return shared_ptr<T, Allocator>(_ptr);
         }
 
@@ -461,7 +473,7 @@ namespace hsd
         make_shared(Allocator<U>& alloc, Args&&... args)
         {
             auto* _ptr = static_cast<Allocator<remove_array_t<T>>>(alloc).allocate(1).unwrap();
-            construct_at(_ptr, forward<Args>(args)...);
+            alloc.construct_at(_ptr, forward<Args>(args)...);
             return shared_ptr<T, Allocator>(_ptr, static_cast<Allocator<remove_array_t<T>>>(alloc), 1);
         }
 

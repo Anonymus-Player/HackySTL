@@ -1,5 +1,7 @@
 #pragma once
 
+#include <TypeTraits.hpp>
+
 #include "BooleanLogic.hpp"
 
 namespace hsd 
@@ -13,16 +15,16 @@ namespace hsd
     };
 
     template <Bit A, Bit B>
-    using half_adder = sum_carry_pair<op_and<A, B>, op_xor<A, B>>;
+    using half_adder = sum_carry_pair<op_xor<A, B>, op_and<A, B>>;
 
     template <Bit A, Bit B, Bit C>
     struct _full_adder 
     {
         using partial1 = half_adder<A, B>;
         using partial2 = half_adder<typename partial1::sum, C>;
-        using partial3 = half_adder<typename partial1::carry, typename partial2::carry>;
+        using partial3 = op_xor<typename partial1::carry, typename partial2::carry>;
 
-        using type = sum_carry_pair<typename partial2::sum, typename partial3::carry>;
+        using type = sum_carry_pair<typename partial2::sum, partial3>;
     };
 
     template <Bit A, Bit B, Bit C>
@@ -104,4 +106,35 @@ namespace hsd
 
     template <Number A, Number B, Bit C>
     using ripple_adder = typename _ripple_adder<A, B, C>::type;
+
+    template <Number N>
+    struct number_bits;
+
+    template <Number N>
+    constexpr usize number_bits_v = number_bits<N>::value;
+
+    template <>
+    struct number_bits<nil>
+        : literal_constant<usize, 0> {};
+    
+    template <Bit F, Number R>
+    struct number_bits<cons_pair<F, R>>
+        : literal_constant<usize, 1 + number_bits_v<R> > {};
+
+    template <Number N, usize I>
+    struct number_get_bit;
+
+    template <Number N, usize I>
+    constexpr usize number_get_bit_v = number_get_bit<N, I>::value;
+
+    template <usize I>
+    struct number_get_bit<nil, I> {}; // No value
+
+    template <Bit F, Number R>
+    struct number_get_bit<cons_pair<F, R>, 0>
+        : literal_constant<bool, is_one_v<F> > {};
+    
+    template <Bit F, Number R, usize I>
+    struct number_get_bit<cons_pair<F, R>, I>
+        : number_get_bit<R, I-1> {};
 }

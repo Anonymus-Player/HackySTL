@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "../../../cpp/HeapArray.hpp"
+#include <HeapArray.hpp>
 
 int main()
 {

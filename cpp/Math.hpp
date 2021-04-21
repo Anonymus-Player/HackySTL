@@ -2,6 +2,7 @@
 
 #include "IntegerSequence.hpp"
 #include "Limits.hpp"
+#include "Concepts.hpp"
 #include <cmath>
 
 namespace hsd
@@ -26,40 +27,25 @@ namespace hsd
         } // namespace constants
         
         template <typename T>
-        concept IsIntegral = is_integral<T>::value;
-        template <typename T>
-        concept IsFloat = is_floating_point<T>::value;
-        template <typename T>
-        concept IsSigned = is_signed<T>::value;
-        template <typename T>
-        concept IsUnsigned = is_unsigned<T>::value;
-        template <typename T>
-        concept IsNatural = IsIntegral<T> && IsUnsigned<T>;
-        template <typename T>
-        concept IsNumber = IsIntegral<T> || IsFloat<T>;
-        template <typename T>
-        concept IsObject = is_object<T>::value;
-        
-        template <typename T>
         concept Middleable = is_number<T>::value ||
             is_same<remove_cv_t<T>, T>::value ||
             negation<is_same<T, bool>>::value;
 
         template <Middleable T>
-        constexpr auto midpoint(T a, T b) noexcept;
+        constexpr auto midpoint(T a, T b);
         template <IsObject T>
-        constexpr auto midpoint(T* a, T* b) noexcept;
+        constexpr auto midpoint(T* a, T* b);
         template <IsNumber T>
-        static constexpr auto abs(const T& value) noexcept;
+        static constexpr auto abs(const T& value);
 
         namespace constexpr_math
         {
             template <IsFloat T>
             static constexpr auto floor(const T& value);
             template <IsNumber T>
-            static constexpr auto exp(T value) noexcept;
+            static constexpr auto exp(T value);
             template <typename T>
-            static constexpr auto log(T value) noexcept;
+            static constexpr auto log(T value);
 
             namespace detail
             {
@@ -77,7 +63,7 @@ namespace hsd
                 }
 
                 template <IsFloat T>
-                static constexpr auto find_fraction(const T& value) noexcept
+                static constexpr auto find_fraction(const T& value)
                 {
                     if(math::abs(value - constexpr_math::floor(value)) >= static_cast<T>(0.5))
                     {
@@ -90,7 +76,7 @@ namespace hsd
                 }
 
                 template <IsFloat T>
-                static constexpr auto find_whole(const T& value) noexcept
+                static constexpr auto find_whole(const T& value)
                 {
                     if(math::abs(value - constexpr_math::floor(value)) >= static_cast<T>(0.5))
                     {
@@ -103,7 +89,8 @@ namespace hsd
                 }
 
                 template < typename T1, IsIntegral T2 >
-                static constexpr T1 pow_int_compute_rec(const T1& base, const T1& val, const T2& exp_term) noexcept
+                static constexpr T1 pow_int_compute_rec(
+                    const T1& base, const T1& val, const T2& exp_term)
                 {
                     if(exp_term > static_cast<T2>(1))
                     {
@@ -123,13 +110,13 @@ namespace hsd
                 }
 
                 template < typename T1, IsUnsigned T2 >
-                static constexpr auto pow_int_sgn_check(const T1& base, const T2& exp_term) noexcept
+                static constexpr auto pow_int_sgn_check(const T1& base, const T2& exp_term)
                 {
                     return pow_int_compute_rec(base, static_cast<T1>(1), exp_term);
                 }
 
                 template < typename T1, IsIntegral T2 >
-                static constexpr auto pow_int_compute(const T1& base, const T2& exp_term) noexcept
+                static constexpr auto pow_int_compute(const T1& base, const T2& exp_term)
                 {
                     if(exp_term == 3)
                     {
@@ -162,13 +149,13 @@ namespace hsd
                 }
 
                 template < typename T1, IsIntegral T2 >
-                static constexpr auto pow_int_type_check(const T1& base, const T2& exp_term) noexcept
+                static constexpr auto pow_int_type_check(const T1& base, const T2& exp_term)
                 {
                     return pow_int_compute(base, exp_term);
                 }
 
                 template < typename T1, IsFloat T2 >
-                static constexpr auto pow_int_type_check(const T1& base, const T2& exp_term) noexcept
+                static constexpr auto pow_int_type_check(const T1& base, const T2& exp_term)
                 {
                     return pow_int_compute(base, static_cast<i64>(exp_term));
                 }
@@ -180,13 +167,14 @@ namespace hsd
                 }
 
                 template < usize Depth, usize MaxDepth, IsNumber T >
-                static constexpr auto exp_cf_rec(const T& value) noexcept
+                static constexpr auto exp_cf_rec(const T& value)
                 {
                     if constexpr(Depth < MaxDepth)
                     {
                         if constexpr(Depth == 1)
                         {
-                            return static_cast<T>(1) - value / exp_cf_rec< Depth + 1, MaxDepth >(value);
+                            return static_cast<T>(1) - value / 
+                                exp_cf_rec< Depth + 1, MaxDepth >(value);
                         }
                         else
                         {
@@ -201,13 +189,13 @@ namespace hsd
                 }
 
                 template <typename T>
-                static constexpr auto exp_cf(const T value) noexcept
+                static constexpr auto exp_cf(const T value)
                 {
                     return static_cast<T>(1) / exp_cf_rec<1, 25>(value);
                 }
 
                 template <typename T>
-                static constexpr auto exp_split(const T value) noexcept
+                static constexpr auto exp_split(const T value)
                 {
                     return pow_integral(
                         constants::euler, find_whole(value)) * 
@@ -216,7 +204,7 @@ namespace hsd
                 }
 
                 template <IsNumber T>
-                static constexpr T mantissa(const T& value) noexcept
+                static constexpr T mantissa(const T& value)
                 {
                     if(value < static_cast<T>(1))
                     {
@@ -233,7 +221,7 @@ namespace hsd
                 }
 
                 template <typename T>
-                static constexpr i64 find_exponent(const T value, const i64& exponent) noexcept
+                static constexpr i64 find_exponent(const T value, const i64& exponent)
                 {
                     if(value < static_cast<T>(1))
                     {
@@ -250,7 +238,7 @@ namespace hsd
                 }
 
                 template <IsNumber T>
-                static constexpr auto tan_series_exp_long(const T& value) noexcept
+                static constexpr auto tan_series_exp_long(const T& value)
                 {   
                     return (
                         -1 / value + (value / 3 + (pow_integral(value, 3) / 45 + 
@@ -259,7 +247,7 @@ namespace hsd
                 }
 
                 template <IsNumber T>
-                static constexpr auto tan_series_exp(const T& value) noexcept
+                static constexpr auto tan_series_exp(const T& value)
                 {
                     using constants::pi;
                     if(limits<T>::epsilon > math::abs(value - static_cast<T>(pi / 2)))
@@ -273,7 +261,7 @@ namespace hsd
                 }
 
                 template < usize Depth, usize MaxDepth, IsNumber T >
-                static constexpr auto tan_cf_rec(const T& value) noexcept
+                static constexpr auto tan_cf_rec(const T& value)
                 {
                     if constexpr(Depth < MaxDepth)
                     {
@@ -287,7 +275,7 @@ namespace hsd
                 }
 
                 template <IsNumber T>
-                static constexpr auto tan_cf_main(const T& value) noexcept
+                static constexpr auto tan_cf_main(const T& value)
                 {
                     if(value > static_cast<T>(1.55) && value < static_cast<T>(1.60))
                     {
@@ -308,7 +296,7 @@ namespace hsd
                 }
 
                 template <IsNumber T>
-                static constexpr auto tan_begin(T value) noexcept
+                static constexpr auto tan_begin(T value)
                 {
                     using constants::pi;
 
@@ -342,19 +330,19 @@ namespace hsd
                 }
 
                 template <IsNumber T>
-                static constexpr auto sin_compute(const T& value) noexcept
+                static constexpr auto sin_compute(const T& value)
                 {
                     return static_cast<T>(2) * value / (static_cast<T>(1) + value * value);
                 }
 
                 template <IsNumber T>
-                static constexpr auto cos_compute(const T& value) noexcept
+                static constexpr auto cos_compute(const T& value)
                 {
                     return (static_cast<T>(1) - value * value) / (static_cast<T>(1) + value * value);
                 }
 
                 template < usize Depth, usize MaxDepth, IsNumber T >
-                static constexpr auto log_cf_main(const T& value) noexcept
+                static constexpr auto log_cf_main(const T& value)
                 {
                     if constexpr(Depth < MaxDepth)
                     {
@@ -369,18 +357,18 @@ namespace hsd
                 }
 
                 template <IsNumber T>
-                static constexpr auto log_cf_begin(const T& value) noexcept
+                static constexpr auto log_cf_begin(const T& value)
                 { 
                     return static_cast<T>(2) * value / log_cf_main<1, 25>(value * value);
                 }
 
                 template <IsNumber T>
-                static constexpr auto log_main(const T& value) noexcept
+                static constexpr auto log_main(const T& value)
                 { 
                     return log_cf_begin((value - static_cast<T>(1)) / (value + static_cast<T>(1)));
                 }
 
-                static constexpr f128 log_mantissa_integer(const i32& value) noexcept
+                static constexpr f128 log_mantissa_integer(const i32& value)
                 {
                     if(value > 1 && value < 11)
                     {
@@ -393,14 +381,14 @@ namespace hsd
                 }
 
                 template <IsNumber T>
-                static constexpr auto log_mantissa(const T& value) noexcept
+                static constexpr auto log_mantissa(const T& value)
                 {   
                     return log_main(value / static_cast<T>(static_cast<i32>(value))) + 
                         static_cast<T>(log_mantissa_integer(static_cast<i32>(value)));
                 }
 
                 template <IsNumber T>
-                static constexpr auto log_breakup(const T& value) noexcept
+                static constexpr auto log_breakup(const T& value)
                 {   
                     return log_mantissa(mantissa(value)) + 
                         static_cast<T>(constants::ln_table[8]) * 
@@ -408,14 +396,16 @@ namespace hsd
                 }
 
                 template <typename T>
-                static constexpr auto pow_dbl(const T& base, const T& exp_term) noexcept
+                static constexpr auto pow_dbl(const T& base, const T& exp_term)
                 {
                     return constexpr_math::exp(exp_term * constexpr_math::log(base));
                 }
 
-                template < typename T1, IsFloat T2, typename ReturnType = std::common_type_t<T1, T2> >
-                static constexpr ReturnType pow_type_check(const T1& base, const T2& exp_term) noexcept
+                template <typename T1, IsFloat T2>
+                static constexpr auto pow_type_check(const T1& base, const T2& exp_term)
                 {
+                    using ReturnType = std::common_type_t<T1, T2>;
+
                     if(base < static_cast<T1>(0))
                     {
                         return limits<ReturnType>::nan;
@@ -429,8 +419,9 @@ namespace hsd
                     }
                 }
 
-                template < typename T1, IsIntegral T2, typename ReturnType = std::common_type_t<T1, T2> >
-                static constexpr ReturnType pow_type_check(const T1& base, const T2& exp_term) noexcept
+                template <typename T1, IsIntegral T2>
+                static constexpr auto pow_type_check(const T1& base, const T2& exp_term)
+                    -> std::common_type_t<T1, T2>
                 {
                     return pow_integral(base, exp_term);
                 }
@@ -475,9 +466,9 @@ namespace hsd
                 }
                 else
                 {
-                    i64 _rez = static_cast<i64>(value);
+                    i64 _res = static_cast<i64>(value);
 
-                    return static_cast<T>(_rez + (value < 0 && 
+                    return static_cast<T>(_res + (value > 0 && 
                         constexpr_math::mod(value, static_cast<T>(1)) != 0)
                     );
                 }
@@ -501,7 +492,7 @@ namespace hsd
             }
 
             template <IsNumber T>
-            static constexpr auto tan(T value) noexcept
+            static constexpr auto tan(T value)
             {
                 if(value == limits<T>::nan)
                 {
@@ -518,7 +509,7 @@ namespace hsd
             }
 
             template <IsNumber T>
-            static constexpr auto sin(T value) noexcept
+            static constexpr auto sin(T value)
             {
                 using constants::pi;
                 if(value == limits<T>::nan)
@@ -552,7 +543,7 @@ namespace hsd
             }
 
             template <IsNumber T>
-            static constexpr auto cos(T value) noexcept
+            static constexpr auto cos(T value)
             {
                 using constants::pi;
                 if(value == limits<T>::nan)
@@ -586,7 +577,7 @@ namespace hsd
             }
 
             template <typename T>
-            static constexpr auto log(T value) noexcept 
+            static constexpr auto log(T value)
             {
                 if(value == limits<T>::nan || value < static_cast<T>(0))
                 {
@@ -618,7 +609,7 @@ namespace hsd
             }
 
             template <typename T>
-            static constexpr auto log2(T value) noexcept 
+            static constexpr auto log2(T value)
             {
                 if(value == limits<T>::nan || value < static_cast<T>(0))
                 {
@@ -643,7 +634,7 @@ namespace hsd
             }
 
             template <typename T>
-            static constexpr auto log10(T value) noexcept 
+            static constexpr auto log10(T value)
             {
                 if(value == limits<T>::nan || value < static_cast<T>(0))
                 {
@@ -668,7 +659,7 @@ namespace hsd
             }
 
             template <IsNumber T>
-            static constexpr auto exp(T value) noexcept
+            static constexpr auto exp(T value)
             {
                 if(value == limits<T>::nan || value == limits<T>::infinity)
                 {
@@ -692,8 +683,8 @@ namespace hsd
                 }
             }
 
-            template < typename T1, typename T2 >
-            static constexpr auto pow(T1 base, T2 exp_term) noexcept
+            template <typename T1, typename T2>
+            static constexpr auto pow(T1 base, T2 exp_term)
             {
                 return detail::pow_type_check(base,exp_term);
             }
@@ -718,7 +709,7 @@ namespace hsd
         } // namespace constexpr_math
 
         template <Middleable T>
-        constexpr auto midpoint(T a, T b) noexcept
+        constexpr auto midpoint(T a, T b)
         {
             if constexpr(hsd::is_integral<T>::value)
             {
@@ -758,7 +749,7 @@ namespace hsd
         }
 
         template <IsObject T>
-        constexpr T* midpoint(T* a, T* b) noexcept
+        constexpr T* midpoint(T* a, T* b)
         {
             static_assert(sizeof(T) != 0, "type must be complete");
             return a + (b - a) / 2;
@@ -817,25 +808,25 @@ namespace hsd
         }
 
         template <IsNumber T>
-        static constexpr auto abs(const T& value) noexcept
+        static constexpr auto abs(const T& value)
         {
             return value < 0 ? -value : value;
         }
 
         template <IsNumber T1>
-        static constexpr T1 min(const T1& first, const T1& second) noexcept
+        static constexpr T1 min(const T1& first, const T1& second)
         {
             return first < second ? first : second;
         }
 
         template <IsNumber T1>
-        static constexpr T1 max(const T1& first, const T1& second) noexcept
+        static constexpr T1 max(const T1& first, const T1& second)
         {
             return first > second ? first : second;
         }
 
         template <IsNumber T>
-        static constexpr auto tan(T value) noexcept
+        static constexpr auto tan(T value)
         {
             if(std::is_constant_evaluated())
             {
@@ -848,7 +839,7 @@ namespace hsd
         }
 
         template <IsNumber T>
-        static constexpr auto sin(T value) noexcept
+        static constexpr auto sin(T value)
         {
             if(std::is_constant_evaluated())
             {
@@ -861,7 +852,7 @@ namespace hsd
         }
 
         template <IsNumber T>
-        static constexpr auto cos(T value) noexcept
+        static constexpr auto cos(T value)
         {
             if(std::is_constant_evaluated())
             {
@@ -874,20 +865,20 @@ namespace hsd
         }
 
         template <typename T>
-        static constexpr auto log(T value) noexcept 
+        static constexpr auto log(T value)
         {
             if(std::is_constant_evaluated())
             {
-                return constexpr_math::log2(value);
+                return constexpr_math::log(value);
             }
             else
             {
-                return std::log2(value);
+                return std::log(value);
             }
         }
 
         template <typename T>
-        static constexpr auto log2(T value) noexcept 
+        static constexpr auto log2(T value)
         {
             if(std::is_constant_evaluated())
             {
@@ -900,7 +891,7 @@ namespace hsd
         }
 
         template <typename T>
-        static constexpr auto log10(T value) noexcept 
+        static constexpr auto log10(T value)
         {
             if(std::is_constant_evaluated())
             {
@@ -913,7 +904,7 @@ namespace hsd
         }
 
         template <IsNumber T>
-        static constexpr auto sqrt(T value) noexcept
+        static constexpr auto sqrt(T value)
         {
             if(std::is_constant_evaluated())
             {
@@ -926,7 +917,7 @@ namespace hsd
         }
 
         template <IsNumber T>
-        static constexpr auto exp(T value) noexcept
+        static constexpr auto exp(T value)
         {
             if(std::is_constant_evaluated())
             {
@@ -939,7 +930,7 @@ namespace hsd
         }
         
         template < typename T1, typename T2 >
-        static constexpr auto pow(T1 base, T2 exp_term) noexcept
+        static constexpr auto pow(T1 base, T2 exp_term)
         {
             if(std::is_constant_evaluated())
             {

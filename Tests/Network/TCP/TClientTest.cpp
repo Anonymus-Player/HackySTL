@@ -1,19 +1,17 @@
-#include "../../../cpp/NetworkClient.hpp"
+#include <NetworkClient.hpp>
 
 int main()
 {
     hsd::tcp::client client{hsd::net::protocol_type::ipv4, 48000, "127.0.0.1"};
-
-    for(hsd::u16 i = 48000; i < 60000; i++)
-    {
-        if(client.switch_to(hsd::net::protocol_type::ipv4, i, "127.0.0.1"))
-            break;
-    }
+    char raw_buf[1024];
 
     while(true)
     {
         hsd::io::print<"> ">();
-        auto state = client.respond<"{}">(hsd::io::read_line().unwrap().to_string());
+        
+        auto& stream_ref = hsd::io::read_line().unwrap();
+        hsd::cstring::copy_until(raw_buf, stream_ref.c_str(), '\n');
+        auto state = client.respond<"{}">(raw_buf);
 
         if(state == hsd::net::received_state::err)
             continue;
@@ -21,7 +19,7 @@ int main()
         auto [buf, code] = client.receive();
         
         if(code == hsd::net::received_state::ok)
-            hsd::io::print<"SERVER> {}">(buf.data());
+            hsd::io::print<"SERVER> {}\n">(buf.data());
         
         if(code != hsd::net::received_state::ok)
             break;

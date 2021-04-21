@@ -1,5 +1,5 @@
-#include "../../cpp/Time.hpp"
-#include "../../cpp/Io.hpp"
+#include <Time.hpp>
+#include <Io.hpp>
 
 int main()
 {

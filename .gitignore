@@ -34,3 +34,6 @@
 # Windows debug files
 *.ilk
 *.pdb
+
+# Vscode specific folder
+.vscode

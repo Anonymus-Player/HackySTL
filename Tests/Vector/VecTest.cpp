@@ -1,4 +1,4 @@
-#include "../../cpp/Vector.hpp"
+#include <Vector.hpp>
 #include <cstdio>
 #include <iterator>
 
@@ -85,7 +85,26 @@ int main()
         for(auto& val : v)
             printf("%d\n", val);
 
-        printf("==========\n");
+        puts("==========");
+    }
+
+    {
+        hsd::vector e = {{1, 2, 3, 4, 5, 6}};
+
+        for(auto iter = e.begin(); iter != e.end();)
+        {
+            if(*iter == 6)
+            {
+                iter = e.erase(iter).unwrap();
+            }
+            else
+            {
+                printf("%d\n", *iter);
+                iter++;
+            }
+        }
+
+        puts("==========");
     }
 
     {
@@ -109,12 +128,12 @@ int main()
         for(auto& val : vec)
             printf("%d\n", val);
 
-        printf("==========\n");
+        puts("==========");
         
         for(auto& val : vec2)
             printf("%d\n", val);
 
-        printf("==========\n");
+        puts("==========");
     }
 
     {

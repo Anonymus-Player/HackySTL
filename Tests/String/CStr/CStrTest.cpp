@@ -1,4 +1,4 @@
-#include "../../../cpp/CString.hpp"
+#include <CString.hpp>
 #include <stdio.h>
 
 template<typename CharT>

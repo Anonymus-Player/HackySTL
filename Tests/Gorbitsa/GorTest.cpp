@@ -1,4 +1,4 @@
-#include "../../cpp/Extra/Constexpr/Gorbitsa.hpp"
+#include <Extra/Constexpr/Gorbitsa.hpp>
 
 template <typename Str>
 consteval auto run() 

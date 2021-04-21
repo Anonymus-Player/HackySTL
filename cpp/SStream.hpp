@@ -16,7 +16,8 @@ namespace hsd
     public:
 		using iterator = CharT*;
         using const_iterator = const CharT*;
-        basic_sstream(const basic_sstream& other) = delete;
+        basic_sstream(const basic_sstream&) = delete;
+        basic_sstream& operator=(const basic_sstream& other) = delete;
 
         basic_sstream(usize size)
         {
@@ -30,27 +31,34 @@ namespace hsd
             delete[] _data;
         }
 
+        void add_raw_data(const CharT* raw_data)
+        {
+            _size += static_cast<usize>(
+                sstream_detail::_write<"">(raw_data, {_data + _size, _capacity - _size})
+            );
+            _data[_size++] = static_cast<CharT>(' ');
+            _data[_size] = static_cast<CharT>('\0');
+        }
+
 		template <typename... Args>
-		void set_data(Args&... args)
+		Result<void, runtime_error> set_data(Args&... args)
 		{
-            auto _data_set = sstream_detail::split_data(_data, _capacity);
+            using sstream_detail::_parse;
+            auto _data_set = sstream_detail::split_data<sizeof...(Args)>(_data, _capacity);
 
             if(sizeof...(Args) > _data_set.size())
             {
-                hsd_fputs_check(stderr, "Input too small to parse");
-                abort();
-            }
-            else if(sizeof...(Args) < _data_set.size())
-            {
-                hsd_fputs_check(stderr, "Warning: Possible Undefined Behavior");
+                return runtime_error{"Input too small to parse"};
             }
             else
             {
                 [&]<usize... Ints>(index_sequence<Ints...>)
                 {
-                    (sstream_detail::_parse(_data_set[Ints], args), ...);
+                    (_parse(_data_set[Ints], args), ...);
                 }(make_index_sequence<sizeof...(Args)>{});
             }
+
+            return {};
 		}
 
         template <typename T>
@@ -91,11 +99,6 @@ namespace hsd
             _size = _capacity - _size + _last_len;
 		}
 
-        basic_string<CharT> to_string()
-        {
-            return basic_string<CharT>(_data);
-        }
-
 		void pop_back()
         {
             _data[--_size] = '\0';
@@ -119,7 +122,7 @@ namespace hsd
 
         usize capacity() const
         {
-            return _size;
+            return _capacity;
         }
 
         usize size() const

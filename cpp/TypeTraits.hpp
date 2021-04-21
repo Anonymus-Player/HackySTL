@@ -70,7 +70,7 @@ namespace hsd
         : public false_type 
     {};
 
-    template < typename T, usize size >
+    template <typename T, usize size>
     struct is_array<T[size]>
         : public true_type 
     {};
@@ -80,7 +80,7 @@ namespace hsd
         : public true_type 
     {};
 
-    template < typename, typename >
+    template <typename, typename>
     struct is_same 
         : public false_type
     {};
@@ -379,17 +379,17 @@ namespace hsd
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) const> 
+            struct is_function<Ret(Args..., ...) const> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) volatile>
+            struct is_function<Ret(Args..., ...) volatile>
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) const volatile>
+            struct is_function<Ret(Args..., ...) const volatile>
                 : true_type
             {};
         } // namespace cv
@@ -402,42 +402,42 @@ namespace hsd
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) &> 
+            struct is_function<Ret(Args..., ...) &> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) const &> 
+            struct is_function<Ret(Args..., ...) const &> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) volatile &> 
+            struct is_function<Ret(Args..., ...) volatile &> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) const volatile &> 
+            struct is_function<Ret(Args..., ...) const volatile &> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) &&> 
+            struct is_function<Ret(Args..., ...) &&> 
                 : true_type 
             {};
             
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) const &&> 
+            struct is_function<Ret(Args..., ...) const &&> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) volatile &&> 
+            struct is_function<Ret(Args..., ...) volatile &&> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) const volatile &&> 
+            struct is_function<Ret(Args..., ...) const volatile &&> 
                 : true_type 
             {};
         } // namespace ref
@@ -450,62 +450,62 @@ namespace hsd
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) noexcept> 
+            struct is_function<Ret(Args..., ...) noexcept> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) const noexcept> 
+            struct is_function<Ret(Args..., ...) const noexcept> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) volatile noexcept>
+            struct is_function<Ret(Args..., ...) volatile noexcept>
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) const volatile noexcept>
+            struct is_function<Ret(Args..., ...) const volatile noexcept>
                 : true_type
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) & noexcept> 
+            struct is_function<Ret(Args..., ...) & noexcept> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) const & noexcept> 
+            struct is_function<Ret(Args..., ...) const & noexcept> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) volatile & noexcept> 
+            struct is_function<Ret(Args..., ...) volatile & noexcept> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) const volatile & noexcept> 
+            struct is_function<Ret(Args..., ...) const volatile & noexcept> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) && noexcept> 
+            struct is_function<Ret(Args..., ...) && noexcept> 
                 : true_type 
             {};
             
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) const && noexcept> 
+            struct is_function<Ret(Args..., ...) const && noexcept> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) volatile && noexcept> 
+            struct is_function<Ret(Args..., ...) volatile && noexcept> 
                 : true_type 
             {};
 
             template < typename Ret, typename... Args >
-            struct is_function<Ret(Args...,...) const volatile && noexcept> 
+            struct is_function<Ret(Args..., ...) const volatile && noexcept> 
                 : true_type 
             {};
         } // namespace noexp
@@ -708,6 +708,12 @@ namespace hsd
         constexpr auto try_add_pointer(int) -> type_identity< typename remove_reference<T>::type* >;
         template <typename T>
         constexpr auto try_add_pointer(...) -> type_identity<T>;
+
+        template <typename T> 
+        T&& declval(int);
+
+        template <typename T>
+        T declval(long);
     } // namespace sfinae
 
     template <typename T>
@@ -728,9 +734,13 @@ namespace hsd
             typename conditional< 
                 is_function<U>::value,
                 typename add_pointer<U>::type,
-                typename remove_cv<U>::type>::type
-                >::type;
+                typename remove_cv<U>::type
+            >::type
+        >::type;
     };
+
+    template <typename T>
+    auto declval() -> decltype(sfinae::declval<T>(0));
 
     template < typename Condition, typename Value >
     using ResolvedType = typename enable_if< Condition::value, Value >::type;
@@ -776,6 +786,9 @@ namespace hsd
 
     template <typename T>
     using remove_cv_t = typename remove_cv<T>::type;
+
+    template <typename T>
+    using remove_cvref_t = typename remove_cv<typename remove_reference<T>::type>::type;
 
     template <typename T>
     using remove_const_t = typename remove_const<T>::type;

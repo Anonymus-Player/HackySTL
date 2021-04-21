@@ -1,8 +1,7 @@
 #pragma once
 
 #include "Time.hpp"
-#include "Io.hpp"
-#include "Result.hpp"
+#include "Vector.hpp"
 
 namespace hsd
 {
@@ -45,7 +44,7 @@ namespace hsd
             const char* _file_name = "unknown";
             const char* _func = "unknown";
             usize _line = 0;
-            clock _clk{};
+            precise_clock _clk{};
 
         public:
             profiler_value(
@@ -70,7 +69,7 @@ namespace hsd
                 return _line;
             }
 
-            clock elapsed_time()
+            precise_clock elapsed_time()
             {
                 return _clk.elapsed_time();
             }
@@ -105,8 +104,8 @@ namespace hsd
         {
             for(auto it = rbegin(); it != rend(); it--)
             {
-                hsd::io::err_print<"Info: {}:{}\n\tFunction: {}\n">
-                (
+                fprintf(
+                    stderr, "Info: %s:%zu\n\tFunction: %s\n",
                     it->file_name(), it->line(), 
                     it->function_name()
                 );
@@ -144,7 +143,8 @@ namespace hsd
         {
             if(_stack.size() > 0)
             {
-                hsd::io::print<"Info: {}:{}\n\tFunction: {}, time taken: {}us\n">(
+                printf(
+                    "Info: %s:%zu\n\tFunction: %s, time taken: %lluus\n", 
                     get().file_name(), get().line(), get().function_name(),
                     get().elapsed_time().to_microseconds()
                 );

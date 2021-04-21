@@ -41,8 +41,8 @@ namespace hsd
         // thanks qookie
         struct block 
         {
-            usize size{};
             bool in_use{};
+            usize size{};
             uchar data[];
         };
 
@@ -74,6 +74,12 @@ namespace hsd
         {
             _buf = other._buf;
             _size = other._size;
+        }
+
+        template <typename... Args>
+        static constexpr void construct_at(T* ptr, Args&&... args)
+        {
+            new (ptr) T(forward<Args>(args)...);
         }
 
         [[nodiscard]] constexpr auto allocate(usize size)
@@ -108,10 +114,6 @@ namespace hsd
 
                         if(_free_size >= size * sizeof(T))
                         {
-                            memset(
-                                reinterpret_cast<uchar*>(_block_back) + 
-                                sizeof(usize) + 1u, 0, _free_size
-                            );
                             _block_back->size = _free_size;
                             _block_back->in_use = true;
                             return reinterpret_cast<T*>(_block_back->data);
@@ -159,6 +161,7 @@ namespace hsd
             return {};
         }
 
+        #ifndef NDEBUG
         void print_buffer() const
         {
             usize _vlen = static_cast<usize>(math::sqrt(static_cast<f64>(_size)));
@@ -169,15 +172,23 @@ namespace hsd
                 for (usize _vindex = 0; _vindex < _vlen; _vindex++)
                     printf("%02x ", _buf[_hindex * _hlen + _vindex]);
 
-                puts("");
+                putc('\n', stdout);
             }
             
         }
+        #endif
     };
 
     template <typename T>
     class allocator
     {
+    private:
+        usize _type_size = sizeof(T);
+        usize _alignment = alignof(T);
+        
+        template <typename U>
+        friend class allocator;
+
     protected:
         T* _data = nullptr;
 
@@ -185,27 +196,37 @@ namespace hsd
         using pointer_type = T*;
         using value_type = T;
         HSD_CONSTEXPR allocator() = default;
-        HSD_CONSTEXPR allocator(const allocator&) = delete;
-        HSD_CONSTEXPR allocator(allocator&&) = delete;
+        HSD_CONSTEXPR allocator(const allocator& other)
+            : _type_size{other._type_size}, _alignment{other._alignment}
+        {}
 
         template <typename U>
-        HSD_CONSTEXPR allocator(const allocator<U>&) = delete;
+        HSD_CONSTEXPR allocator(const allocator<U>& other)
+            : _type_size{other._type_size}, _alignment{other._alignment}
+        {}
+
         template <typename U>
-        HSD_CONSTEXPR allocator(allocator<U>&&) = delete;
+        HSD_CONSTEXPR allocator& operator=(const allocator<U>& rhs)
+        {
+            _type_size = rhs._type_size;
+            _alignment = rhs._alignment;
+            return *this;
+        }
 
         [[nodiscard]] inline auto allocate(usize size)
             -> Result< T*, allocator_detail::allocator_error >
         {
             if(size > limits<usize>::max / sizeof(T))
             {
-                return allocator_detail::allocator_error{"Bad length for allocation"};
+                return {allocator_detail::allocator_error{"Bad length for allocation"}, err_value{}};
             }
             else
             {
                 #ifdef __cpp_aligned_new
-                return static_cast<pointer_type>(::operator new(size * sizeof(T), std::align_val_t(alignof(T))));
+                return {static_cast<pointer_type>(::operator new(
+                    size * _type_size, static_cast<std::align_val_t>(_alignment))), ok_value{}};
                 #else
-                return static_cast<pointer_type>(::operator new(size * sizeof(T)));
+                return {static_cast<pointer_type>(::operator new(size * _type_size)), ok_value{}};
                 #endif
             }
         }
@@ -220,13 +241,19 @@ namespace hsd
             else
             {
                 #ifdef __cpp_sized_deallocation
-                ::operator delete(ptr, size * sizeof(T), std::align_val_t(alignof(T)));
+                ::operator delete(ptr, size * _type_size, static_cast<std::align_val_t>(_alignment));
                 #else
-                ::operator delete(ptr, std::align_val_t(alignof(T)));
+                ::operator delete(ptr, static_cast<std::align_val_t>(_alignment));
                 #endif
 
                 return {};
             }
+        }
+
+        template <typename... Args>
+        static constexpr void construct_at(T* ptr, Args&&... args)
+        {
+            new (ptr) T(forward<Args>(args)...);
         }
     };
 
@@ -249,5 +276,11 @@ namespace hsd
         {
             return MaxSize;
         }
+
+        template <typename... Args>
+        static constexpr void construct_at(T* ptr, Args&&... args)
+        {
+            (*ptr) = T(forward<Args>(args)...);
+        }
     };
-} // mamespace hsd
+} // namespace hsd

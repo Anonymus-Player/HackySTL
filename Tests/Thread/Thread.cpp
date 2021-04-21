@@ -1,13 +1,25 @@
-#include "../../cpp/Thread.hpp"
-#include "../../cpp/Io.hpp"
+#include <Thread.hpp>
+#include <Functional.hpp>
+#include <Io.hpp>
 
-static void foo(int a, float b) 
+class bar
 {
-	hsd::io::print<"{} {}\n">(a, b);
-}
+private:
+	int _a, _b;
+
+public:
+	constexpr bar(int a, int b)
+		: _a{a}, _b{b}
+	{}
+
+	void foo() 
+	{
+		hsd::io::print<"{} {}\n">(_a, _b);
+	}
+};
 
 int main() 
 {
-	hsd::thread t{foo, 1, 2.3f};
+	hsd::thread t{hsd::bind(&bar::foo, bar{211, 3223})};
 	t.join();
 }

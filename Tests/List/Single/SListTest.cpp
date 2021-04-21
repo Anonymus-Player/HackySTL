@@ -1,4 +1,4 @@
-#include "../../../cpp/ForwardList.hpp"
+#include <ForwardList.hpp>
 #include <stdio.h>
 
 struct S
@@ -21,7 +21,7 @@ int main()
 
     for(auto it : ls)
     {
-        printf("%d\n", it.unwrap().a);
+        printf("%d\n", it.a);
     }
 
     puts("==========");
@@ -29,7 +29,7 @@ int main()
 
     for(auto it : ls)
     {
-        printf("%d\n", it.unwrap().a);
+        printf("%d\n", it.a);
     }
 
     puts("==========");
@@ -37,6 +37,20 @@ int main()
 
     for(auto it : ls)
     {
-        printf("%d\n", it.unwrap().a);
+        printf("%d\n", it.a);
+    }
+
+    puts("==========");
+
+    for(auto iter = ls.begin(); iter != ls.end();)
+    {
+        if(iter->a == 3)
+        {
+            iter = ls.erase(iter).unwrap();
+        }
+        else
+        {
+            iter++;
+        }
     }
 }

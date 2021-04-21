@@ -1,39 +1,38 @@
-#include "../../cpp/Variant.hpp"
-
-#include <iostream>
+#include <Variant.hpp>
+#include <Io.hpp>
 
 template <typename T>
 struct verbose 
 {
     verbose() 
     {
-        std::cout << T::name() << " default constructor\n";
+        hsd::io::print<"{} default constructor\n">(T::name());
     }
 
     ~verbose() 
     {
-        std::cout << T::name() << " destructor\n";
+        hsd::io::print<"{} destructor\n">(T::name());
     }
 
     verbose(verbose const&) 
     {
-        std::cout << T::name() << " copy constructor\n";
+        hsd::io::print<"{} copy constructor\n">(T::name());
     }
 
     verbose(verbose&&) 
     {
-        std::cout << T::name() << " move constructor\n";
+        hsd::io::print<"{} move constructor\n">(T::name());
     }
 
     auto& operator=(verbose const&) 
     {
-        std::cout << T::name() << " copy assignment\n";
+        hsd::io::print<"{} copy assignment\n">(T::name());
         return *this;
     }
 
     auto& operator=(verbose&&) 
     {
-        std::cout << T::name() << " move assignment\n";
+        hsd::io::print<"{} move assignment\n">(T::name());
         return *this;
     }
     
@@ -70,7 +69,7 @@ struct B : verbose<B>
     B(int a) 
         : verbose<B>(0), _a(a) 
     {
-        std::cout << "B constructor\n";
+        hsd::io::print<"B constructor\n">();
     }
 };
 
@@ -91,62 +90,64 @@ int main()
     hsd::variant<A, B> va3{A()};
     auto va4(va2);
     
-    std::cout << hsd::variant_size<decltype(va4)>::value << '\n';
+    hsd::io::print<"{}\n">(hsd::variant_size<decltype(va4)>::value);
 
-    std::cout << va1.index() << '\n';
-    std::cout << va2.index() << '\n';
-    std::cout << va3.index() << '\n';
-    std::cout << va4.index() << '\n';
+    hsd::io::print<"{}\n">(va1.index());
+    hsd::io::print<"{}\n">(va2.index());
+    hsd::io::print<"{}\n">(va3.index());
+    hsd::io::print<"{}\n">(va4.index());
 
-    std::cout << va1.get<0>() << '\n';
-    try 
+    hsd::io::print<"{}\n">(va1.get<0>().unwrap());
+    
+    auto _res = va1.get<float>();
+
+    if(_res) 
     {
         // This actually throws 
-        std::cout << va1.get<float>() << '\n';
+        hsd::io::print<"{}\n">(_res.unwrap());
     } 
-    catch (hsd::bad_variant_access& err) 
+    else
     {
-        std::cerr << "Caught error: " << err.what() << '\n';
+        hsd::io::err_print<"Caught error: {}\n">(_res.unwrap_err()());
     }
 
     if (auto* val = hsd::get_if<float>(&va1)) 
     {
-        std::cout << "Got value: " << *val << '\n';
+        hsd::io::print<"Got value: {}\n">(*val);
     } 
     else 
     {
-        std::cout << "No value of type float in va1\n";
+        hsd::io::print<"No value of type float in va1\n">();
     }
     if (auto* val = va2.get_if<B>()) 
     {
-        std::cout << "B inside va2: " << val->_a << '\n';
+        hsd::io::print<"B inside va2: {}\n">(val->_a);
     } 
     else 
     {
-        std::cout << "No B in va2" << '\n';
+        hsd::io::print<"No B in va2\n">();
     }
 
-    std::cout << std::boolalpha;
-    std::cout << "va2 == va3: " << (va2 == va3) << '\n';
+    hsd::io::print<"va2 == va3: {}\n">(va2 == va3);
     va2 = va3;
-    std::cout << "(after assignment) " << (va2 == va3) << '\n';
+    hsd::io::print<"(after assignment) {}\n">(va2 == va3);
     va3 = hsd::variant<A, B>(6);
-    std::cout << "(after new assignment)\nva3 == va4: " << (va3 == va4) << '\n';
-    va3.get<B>()._a = 5;
-    std::cout << "(after modification) " << (va3 == va4) << '\n';
+    hsd::io::print<"(after new assignment)\nva3 == va4: {}\n">(va3 == va4);
+    va3.get<B>().unwrap()._a = 5;
+    hsd::io::print<"(after modification) {}\n">(va3 == va4);
 
     hsd::variant<A, B> va5;
 
-    va5.visit([](auto&& x) 
+    va5.visit([](auto&&) 
     {
-        std::cout << "Got " << typeid(x).name() << '\n';
+        hsd::io::print<"Auto deduction: {}\n">(HSD_FUNCTION_NAME + 28);
     });
 
     va5 = B(42);
 
-    va5.visit([](auto&& x) 
+    va5.visit([](auto&&) 
     {
-        std::cout << "Got " << typeid(x).name() << '\n';
+        hsd::io::print<"Auto deduction: {}\n">(HSD_FUNCTION_NAME + 28);
     });
 
     hsd::variant<verbose<void>, verbose<void>> va6;

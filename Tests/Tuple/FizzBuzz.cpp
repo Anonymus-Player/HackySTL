@@ -1,5 +1,5 @@
-#include "../../cpp/Io.hpp"
-#include "../../cpp/Tuple.hpp"
+#include <Io.hpp>
+#include <Tuple.hpp>
 
 template <hsd::usize N>
 struct FizzBase

@@ -23,9 +23,17 @@ namespace hsd
                 return "Tried to use an invalid key";
             }
         };
+
+        struct bad_access
+        {
+            const char* operator()() const
+            {
+                return "Tried to access an element out of bounds";
+            }
+        };
     } // namespace umap_detail
 
-    template< typename Key, typename T, typename Hasher = fnv1a<usize>, 
+    template< typename Key, typename T, typename Hasher = hash<usize, Key>, 
         template <typename> typename BucketAllocator = allocator,
         template <typename> typename Allocator = BucketAllocator >
     class unordered_map
@@ -33,6 +41,7 @@ namespace hsd
     private:
         using ref_value = pair< typename Hasher::ResultType, usize >;
         using ref_vector = vector< ref_value, BucketAllocator >;
+        using bucket_iter = typename ref_vector::iterator;
 
         static constexpr f64 _limit_ratio = 0.75f;
         vector< ref_vector, BucketAllocator > _buckets;
@@ -65,6 +74,23 @@ namespace hsd
             }
 
             return {static_cast<usize>(-1), _index};
+        }
+
+        constexpr auto _get_iter(const Key& key)
+            -> Result< pair<bucket_iter, usize>, umap_detail::bad_access >
+        {
+            auto _key_hash = Hasher::get_hash(key);
+            usize _index = _key_hash % _buckets.size();
+
+            for(auto _val = _buckets[_index].begin(); _val != _buckets[_index].end(); _val++)
+            {
+                if(_key_hash == _val->first)
+                {
+                    return pair{_val, _index};
+                }
+            }
+
+            return umap_detail::bad_access{};
         }
 
     public:
@@ -310,10 +336,29 @@ namespace hsd
             }
         }
 
+        constexpr auto erase(const_iterator pos)
+            -> Result<iterator, umap_detail::bad_access>
+        {
+            auto _result = _get_iter(pos->first);
+            
+            if(_result.is_ok() == false)
+                return umap_detail::bad_access{};
+            
+            // now .unwrap() should not fail
+            auto [_iter, _index] = _result.unwrap();
+            _buckets[_index].erase(_iter).unwrap(HSD_FUNCTION_NAME);
+            return _data.erase(pos).unwrap(HSD_FUNCTION_NAME);
+        }
+
         constexpr void clear()
         {
             _data.clear();
             _buckets.clear();
+        }
+
+        constexpr usize size() const
+        {
+            return _data.size();
         }
 
         constexpr iterator begin()
@@ -345,16 +390,46 @@ namespace hsd
         {
             return _data.cend();
         }
+
+        constexpr iterator rbegin()
+        {
+            return _data.rbegin();
+        }
+
+        constexpr const_iterator rbegin() const
+        {
+            return crbegin();
+        }
+
+        constexpr iterator rend()
+        {
+            return _data.rend();
+        }
+
+        constexpr const_iterator rend() const
+        {
+            return crend();
+        }
+
+        constexpr const_iterator crbegin() const
+        {
+            return _data.crbegin();
+        }
+
+        constexpr const_iterator crend() const
+        {
+            return _data.crend();
+        }
     };
 
     template< typename Key, typename T, usize N >
     unordered_map(pair<Key, T> (&&other)[N]) 
-        -> unordered_map< Key, T, fnv1a<usize>, allocator >;
+        -> unordered_map< Key, T, hash<usize, Key>, allocator >;
 
     template< typename Key, typename T >
-    using buffered_umap = unordered_map< Key, T, fnv1a<usize>, buffered_allocator >;
+    using buffered_umap = unordered_map< Key, T, hash<usize, Key>, buffered_allocator >;
     template< typename Key, typename T, usize N >
-    using static_umap = unordered_map< Key, T, fnv1a<usize>, 
+    using static_umap = unordered_map< Key, T, hash<usize, Key>, 
         ct_alloc_helper<N + N / 2>::template alloc_type,
         ct_alloc_helper<N>::template alloc_type >;
 } // namespace hsd

@@ -1,7 +1,7 @@
-#include <iostream>
+#include <Io.hpp>
 
 #define HSD_ANY_ENABLE_TYPEINFO
-#include "../../cpp/Any.hpp"
+#include <Any.hpp>
 
 struct S
 {
@@ -15,44 +15,42 @@ struct S
 
 int main()
 {
-    std::boolalpha(std::cout);
-
     // any type
     hsd::any a = 1;
-    std::cout << a.type().name() << ": " << a.cast_to<int>().unwrap() << '\n';
+    hsd::io::print<"{}: {}\n">(a.type().name(), a.cast_to<int>().unwrap());
     a = 3.14;
-    std::cout << a.type().name() << ": " << a.cast_to<double>().unwrap() << '\n';
+    hsd::io::print<"{}: {}\n">(a.type().name(), a.cast_to<double>().unwrap());
     a = true;
-    std::cout << a.type().name() << ": " << a.cast_to<bool>().unwrap() << '\n';
+    hsd::io::print<"{}: {}\n">(a.type().name(), a.cast_to<bool>().unwrap());
  
     // bad cast
     a = 1;
-    std::cout << a.cast_to<float>().unwrap() << '\n';
+    hsd::io::print<"{}\n">(a.cast_to<float>().unwrap_err()());
  
     // has value
     a = 1;
+    
     if (a.has_value())
-    {
-        std::cout << a.type().name() << '\n';
-    }
+        hsd::io::print<"Has value\n">();
  
     // reset
     a.reset();
+    
     if (!a.has_value())
-    {
-        std::cout << "no value\n";
-    }
+        hsd::io::print<"No value\n">();
  
     // pointer to contained data
     a = 1;
+    
     if (int* i = a.cast_if<int>())
-        std::cout << *i << "\n";
+        hsd::io::print<"{}\n">(*i);
 
     // holds a given type
     a.emplace<S>(1, 'c', 4.2f, "str");
+    
     if (a.holds_type<S>())
-        std::cout << "Holds a S\n";
+        hsd::io::print<"Holds a S\n">();
     
     if (a.holds_type<int>())
-        std::cout << "Holds an int\n";
+        hsd::io::print<"Holds an int\n">;
 }

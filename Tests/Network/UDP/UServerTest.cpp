@@ -1,8 +1,9 @@
-#include "../../../cpp/NetworkServer.hpp"
+#include <NetworkServer.hpp>
 
 int main()
 {
-    hsd::udp::server server{hsd::net::protocol_type::ipv4, 54000, "0.0.0.0"};
+    hsd::udp::server server{hsd::net::protocol_type::ipv4, 48000, "0.0.0.0"};
+    char raw_buf[1024];
 
     while(true)
     {
@@ -10,12 +11,15 @@ int main()
         
         if(code == hsd::net::received_state::ok)
         {
-            hsd::io::print<"CLIENT> {}">(buf.data());
-            server.respond<"Good\n">();
+            hsd::io::print<"CLIENT> {}\n">(buf.data());
+            
+            // Copy the data to a buffer
+            hsd::cstring::copy(raw_buf, buf.c_str());
+            server.respond<"{}">(raw_buf);
         }
         
-        // because newline will be sent as well
-        if(buf.to_string() == "exit\n")
+        // Because newline will be sent as well
+        if(hsd::cstring::compare(buf.c_str(), "exit\n") == 0)
             break;
 
         if(code != hsd::net::received_state::ok)

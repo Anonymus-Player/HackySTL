@@ -7,9 +7,12 @@
             "args": [
                 "-g",
                 "-std=c++20",
+                "-Wpadded",
                 "${file}",
+                "-I${workspaceFolder}/cpp",
                 "-fno-exceptions",
                 "-o",
+                "-lpthread",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],
             "options": {
@@ -29,9 +32,14 @@
             "command": "/usr/bin/g++",
             "args": [
                 "-g",
+                //"-fsanitize=address",
+                //"-Wpadded",
+                "-fconcepts-diagnostics-depth=5",
                 "-std=c++20",
                 "${file}",
+                "-I${workspaceFolder}/cpp",
                 "-fno-exceptions",
+                "-lpthread",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],

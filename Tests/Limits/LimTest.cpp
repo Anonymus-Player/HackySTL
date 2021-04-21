@@ -1,6 +1,5 @@
-#include "../../cpp/Limits.hpp"
-#include "../../cpp/Io.hpp"
-#include <limits>
+#include <Limits.hpp>
+#include <Io.hpp>
 
 int main()
 {

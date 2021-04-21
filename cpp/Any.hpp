@@ -49,7 +49,7 @@ namespace hsd
 
         hsd::unique_ptr<_any_base> clone() const override 
         {
-            return hsd::make_unique<_any_derived, allocator>(_value);
+            return hsd::make_unique<_any_derived>(_value);
         }
 
         #ifdef HSD_ANY_ENABLE_TYPEINFO
@@ -93,7 +93,8 @@ namespace hsd
         }
 
         template <typename T>
-        HSD_CONSTEXPR auto cast_to() const -> Result<T, bad_any_cast>
+        HSD_CONSTEXPR auto cast_to() const
+            -> Result<reference<T>, bad_any_cast>
         {
             using type = typename std::remove_pointer<T>::type;
 

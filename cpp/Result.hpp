@@ -62,16 +62,24 @@ namespace hsd
             return "Acessed an uninitialized value";
         }
     };
+
+    struct ok_value {};
+    struct err_value {};
     
     class runtime_error
     {
-    private:
+    protected:
         const char* _err = nullptr;
         
     public:
-        runtime_error(const char* error)
+        constexpr runtime_error(const char* error)
             : _err{error}
         {}
+
+        constexpr const char* operator()() const
+        {
+            return _err;
+        }
     };
 
     template < typename Ok, typename Err >
@@ -90,43 +98,41 @@ namespace hsd
         HSD_CONSTEXPR Result& operator=(const Result&) = delete;
         HSD_CONSTEXPR Result& operator=(Result&&) = delete;
 
-        HSD_CONSTEXPR Result(const Ok& value)
-            : _ok_data{value}, _initialized{true}
-        {}
-
-        HSD_CONSTEXPR Result(Ok&& value)
-            : _ok_data{move(value)}, _initialized{true}
+        template <typename T>
+        requires (std::is_constructible_v<Ok, T&&>)
+        HSD_CONSTEXPR Result(T&& value, ok_value = {})
+            : _ok_data{forward<T>(value)}, _initialized{true}
         {}
 
         template <typename T>
-        requires (std::is_convertible_v<T, Err>)
-        HSD_CONSTEXPR Result(T&& value)
+        requires (std::is_constructible_v<Err, T&&>)
+        HSD_CONSTEXPR Result(T&& value, err_value = {})
             : _err_data{forward<T>(value)}, _initialized{false}
         {}
 
-        HSD_CONSTEXPR Result(const Result& other)
+        Result(const Result& other)
             : _initialized{other._initialized}
         {
             if(_initialized)
             {
-                construct_at(&_ok_data, other._ok_data);
+                new(&_ok_data) Ok(other._ok_data);
             }
             else
             {
-                construct_at(&_err_data, other._err_data);
+                new(&_err_data) Err(other._err_data);
             }
         }
 
-        HSD_CONSTEXPR Result(Result&& other)
+        Result(Result&& other)
             : _initialized{other._initialized}
         {
             if(_initialized)
             {
-                construct_at(&_ok_data, move(other._ok_data));
+                new(&_ok_data) Ok(move(other._ok_data));
             }
             else
             {
-                construct_at(&_err_data, move(other._err_data));
+                new(&_err_data) Err(move(other._err_data));
             }
         }
 
@@ -142,10 +148,20 @@ namespace hsd
             }
         }
 
+        constexpr bool is_ok() const
+        {
+            return _initialized;
+        }
+
+        explicit constexpr operator bool() const
+        {
+            return _initialized;
+        }
+
         constexpr decltype(auto) unwrap(
             const char* func = __builtin_FUNCTION(),
             const char* file_name = __builtin_FILE(), 
-            usize line = __builtin_LINE()) const
+            usize line = __builtin_LINE())
         {
             if(_initialized)
             {
@@ -155,7 +171,7 @@ namespace hsd
                 }
                 else
                 {
-                    return _ok_data;
+                    return release(_ok_data);
                 }
             }
             else
@@ -203,7 +219,7 @@ namespace hsd
             const char* message = "Got an Error instead",
             const char* func = __builtin_FUNCTION(),
             const char* file_name = __builtin_FILE(), 
-            usize line = __builtin_LINE()) const
+            usize line = __builtin_LINE())
         {
             if(_initialized)
             {
@@ -213,7 +229,7 @@ namespace hsd
                 }
                 else
                 {
-                    return _ok_data;
+                    return release(_ok_data);
                 }
             }
             else
@@ -229,7 +245,7 @@ namespace hsd
         }
 
         template <typename... Args>
-        constexpr decltype(auto) unwrap_or(Args&&... args) const
+        constexpr decltype(auto) unwrap_or(Args&&... args)
         requires (Result_detail::IsReference<Ok>)
         {
             if(_initialized)
@@ -254,12 +270,12 @@ namespace hsd
         } 
 
         template <typename... Args>
-        constexpr decltype(auto) unwrap_or(Args&&... args) const
+        constexpr decltype(auto) unwrap_or(Args&&... args)
         requires (!Result_detail::IsReference<Ok>)
         {
             if(_initialized)
             {
-                return _ok_data;
+                return release(_ok_data);
             }
             else
             {
@@ -267,12 +283,12 @@ namespace hsd
             }
         } 
         
-        constexpr decltype(auto) unwrap_or_default() const
+        constexpr decltype(auto) unwrap_or_default()
         requires (std::is_default_constructible_v<Ok>)
         {
             if(_initialized)
             {
-                return _ok_data;
+                return release(_ok_data);
             }
             else
             {
@@ -282,7 +298,7 @@ namespace hsd
 
         template <typename Func>
         requires (Result_detail::UnwrapInvocable<Func, Ok>)
-        constexpr decltype(auto) unwrap_or_else(Func&& func) const
+        constexpr decltype(auto) unwrap_or_else(Func&& func)
         {
             if(_initialized)
             {
@@ -292,7 +308,7 @@ namespace hsd
                 }
                 else
                 {
-                    return _ok_data;
+                    return release(_ok_data);
                 }
             }
             else
@@ -304,7 +320,7 @@ namespace hsd
         constexpr decltype(auto) unwrap_err(
             const char* func = __builtin_FUNCTION(),
             const char* file_name = __builtin_FILE(),
-            usize line = __builtin_LINE()) const
+            usize line = __builtin_LINE())
         {
             if(!_initialized)
             {
@@ -321,7 +337,7 @@ namespace hsd
                 }
                 else
                 {
-                    return _err_data;
+                    return release(_err_data);
                 }
             }
             else
@@ -340,7 +356,7 @@ namespace hsd
             const char* message = "Got a Value instead",
             const char* func = __builtin_FUNCTION(), 
             const char* file_name = __builtin_FILE(), 
-            usize line = __builtin_LINE()) const
+            usize line = __builtin_LINE())
         {
             if(!_initialized)
             {
@@ -357,7 +373,7 @@ namespace hsd
                 }
                 else
                 {
-                    return _err_data;
+                    return release(_err_data);
                 }
             }
             else
@@ -396,7 +412,7 @@ namespace hsd
         {}
 
         template <typename T>
-        requires (std::is_convertible_v<T, Err>)
+        requires (std::is_constructible_v<Err, T&&>)
         HSD_CONSTEXPR Result(T&& value)
             : _err_data{forward<Err>(value)}, _initialized{false}
         {}
@@ -408,11 +424,21 @@ namespace hsd
                 _err_data.~Err();
             }
         }
+        
+        constexpr bool is_ok() const
+        {
+            return _initialized;
+        }
+
+        explicit constexpr operator bool() const
+        {
+            return _initialized;
+        }
 
         constexpr void unwrap(
             const char* func = __builtin_FUNCTION(),
             const char* file_name = __builtin_FILE(),
-            usize line = __builtin_LINE()) const
+            usize line = __builtin_LINE())
         {
             if(!_initialized)
             {
@@ -459,7 +485,7 @@ namespace hsd
             const char* message = "Got an Error instead",
             const char* func = __builtin_FUNCTION(),
             const char* file_name = __builtin_FILE(),
-            usize line = __builtin_LINE()) const
+            usize line = __builtin_LINE())
         {
             if(!_initialized)
             {
@@ -475,7 +501,7 @@ namespace hsd
 
         template <typename Func>
         requires (Result_detail::UnwrapInvocable<Func, void>)
-        constexpr void unwrap_or_else(Func&& func) const
+        constexpr void unwrap_or_else(Func&& func)
         {
             if(!_initialized)
             {
@@ -486,7 +512,7 @@ namespace hsd
         constexpr decltype(auto) unwrap_err(
             const char* func = __builtin_FUNCTION(),
             const char* file_name = __builtin_FILE(),
-            usize line = __builtin_LINE()) const
+            usize line = __builtin_LINE())
         {
             if(_initialized)
             {
@@ -505,7 +531,7 @@ namespace hsd
                 }
                 else
                 {
-                    return _err_data;
+                    return release(_err_data);
                 }
             }
         }
@@ -514,7 +540,7 @@ namespace hsd
             const char* message = "Got a Value instead",
             const char* func = __builtin_FUNCTION(),
             const char* file_name = __builtin_FILE(), 
-            usize line = __builtin_LINE()) const
+            usize line = __builtin_LINE())
         {
             if(_initialized)
             {

@@ -76,4 +76,12 @@ namespace hsd
 
     template <Bit A, Bit B>
     using op_xor = binary_operation<A, B, bit::zero, bit::one, bit::one, bit::zero>;
+
+
+    // Serialization traits
+    template <typename V>
+    struct serialize_value;
+
+    template <typename V>
+    constexpr auto serialize_value_v = serialize_value<V>::value;
 }

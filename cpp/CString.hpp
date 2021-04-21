@@ -2,6 +2,7 @@
 
 #include "Utility.hpp"
 #include "Limits.hpp"
+#include "StackArray.hpp"
 
 namespace hsd
 {	
@@ -50,7 +51,63 @@ namespace hsd
 			return letter >= '0' && letter <= '9';
 		}
 
-    public:
+		static constexpr auto _get_whitespace_chars()
+		{
+			if constexpr (sizeof(CharT) >= sizeof(char16))
+			{
+				return stack_array{
+					static_cast<CharT>(0x09),
+					static_cast<CharT>(0x0A),
+					static_cast<CharT>(0x0B),
+					static_cast<CharT>(0x0C),
+					static_cast<CharT>(0x0D),
+					static_cast<CharT>(0x20),
+					static_cast<CharT>(0x85),
+					static_cast<CharT>(0xA0),
+					static_cast<CharT>(0x1680),
+					static_cast<CharT>(0x180E),
+					static_cast<CharT>(0x2000),
+					static_cast<CharT>(0x2001),
+					static_cast<CharT>(0x2002),
+					static_cast<CharT>(0x2003),
+					static_cast<CharT>(0x2004),
+					static_cast<CharT>(0x2005),
+					static_cast<CharT>(0x2006),
+					static_cast<CharT>(0x2007),
+					static_cast<CharT>(0x2008),
+					static_cast<CharT>(0x2009),
+					static_cast<CharT>(0x200A),
+					static_cast<CharT>(0x2028),
+					static_cast<CharT>(0x2029),
+					static_cast<CharT>(0x202F),
+					static_cast<CharT>(0x205F),
+					static_cast<CharT>(0x3000),
+					static_cast<CharT>(0) // Terminator
+				};
+			} 
+			else 
+			{
+				return stack_array{
+					static_cast<CharT>(0x09),
+					static_cast<CharT>(0x0A),
+					static_cast<CharT>(0x0B),
+					static_cast<CharT>(0x0C),
+					static_cast<CharT>(0x0D),
+					static_cast<CharT>(0x20),
+					static_cast<CharT>(0x85),
+					static_cast<CharT>(0xA0),
+					static_cast<CharT>(0) // Terminator
+				};
+			}
+		}
+	public:
+		static constexpr const auto whitespace_chars_arr = _get_whitespace_chars();
+		static constexpr const CharT* whitespace_chars = whitespace_chars_arr.data();
+
+		static constexpr bool iswhitespace(CharT ch)
+		{
+			return find(whitespace_chars, ch) != nullptr;
+		}
 
         static constexpr const CharT* find(const CharT* str, const CharT* substr)
         {
@@ -115,6 +172,8 @@ namespace hsd
         {
         	for(; pos != 0; pos--)
         	{
+				auto _bdg_char = str[pos];
+
         		if(str[pos] == letter)
         			return &str[pos];
         	}
@@ -157,7 +216,7 @@ namespace hsd
         	return str;
         }
 
-	    static HSD_CONSTEXPR const CharT* reverse(const CharT* str, usize size = 0)
+	    static HSD_CONSTEXPR CharT* reverse(const CharT* str, usize size = 0)
 	    {
 	    	usize _begin = 0;
 	        usize _end = size - 1;
@@ -375,6 +434,7 @@ namespace hsd
 			usize _len = _num_len(num);
 			CharT* _buf = new CharT[_len + 1];
 			_buf[_len] = '\0';
+			_buf[0] = '0';
 
 			for(; num != 0; num /= 10)
 			{
@@ -390,6 +450,7 @@ namespace hsd
 			usize _len = _num_len(num);
 			CharT* _buf = new CharT[_len + 1];
 			_buf[_len] = '\0';
+			_buf[0] = '0';
 
 			for(; num != 0; num /= 10)
 			{
@@ -405,10 +466,11 @@ namespace hsd
 			usize _len = _num_len(num);
 			CharT* _buf = new CharT[_len + 1];
 			_buf[_len] = '\0';
+			_buf[0] = '0';
 
 			for(; num != 0; num /= 10)
 			{
-				_buf[--_len] = '0' + (num % 10);
+				_buf[--_len] = '0' + static_cast<CharT>(num % 10);
 			}
 
 			return _buf;
@@ -419,6 +481,7 @@ namespace hsd
 			usize _len = _num_len(num);
 			CharT* _buf = new CharT[_len + 1];
 			_buf[_len] = '\0';
+			_buf[0] = '0';
 
 			for(; num != 0; num /= 10)
 			{
@@ -433,6 +496,7 @@ namespace hsd
 			usize _len = _num_len(num);
 			CharT* _buf = new CharT[_len + 1];
 			_buf[_len] = '\0';
+			_buf[0] = '0';
 
 			for(; num != 0; num /= 10)
 			{
@@ -523,22 +587,16 @@ namespace hsd
 			return _buf;
 		}
 		
-		static HSD_CONSTEXPR CharT* to_string(const CharT* str)
+		static HSD_CONSTEXPR CharT* to_string(const CharT* str, usize len = 0)
 		{
-			usize _len = length(str);
+			usize _len = len;
+			
+			if(len == 0)
+				_len = length(str);
+
 			CharT* _buf = new CharT[_len + 1];
 
 			for (usize _index = 0; _index <= _len; _index++)
-				_buf[_index] = static_cast<CharT>(str[_index]);
-
-			return _buf;
-		}
-
-		static HSD_CONSTEXPR CharT* to_string(const CharT* str, usize len)
-		{
-			CharT* _buf = new CharT[len + 1];
-
-			for (usize _index = 0; _index <= len; _index++)
 				_buf[_index] = static_cast<CharT>(str[_index]);
 
 			return _buf;
@@ -552,9 +610,9 @@ namespace hsd
 			return _buf;
 		}
 
-		static constexpr i32 parse_i(const CharT* str)
+		static constexpr isize parse_i(const CharT* str)
 		{
-			i32 _num = 0;
+			isize _num = 0;
 			bool _negative = false;
 
 			for(; *str != '\0' && !_is_number(*str); str++);
@@ -583,10 +641,10 @@ namespace hsd
 			return _num;
 		}
 
-		static constexpr f32 parse_f(const CharT* str)
+		static constexpr f64 parse_f(const CharT* str)
 		{
-		    float _round_num = 0;
-			float _point_num = 0;
+		    f64 _round_num = 0;
+			f64 _point_num = 0;
 			bool _negative = false;
 			usize _num_len = 0;
 
@@ -677,9 +735,22 @@ namespace hsd
 			char* ptr = dest;
 
 			for(; *src; dest++, src++)
-			{
 				*dest = *src;
-			}
+			
+			return ptr;
+		}
+
+		static constexpr CharT* copy_until(CharT* dest, const CharT* src, CharT letter)
+		{
+			if (dest == nullptr)
+				return nullptr;
+
+			char* ptr = dest;
+
+			for(; *src != '\0' && *src != letter; dest++, src++)
+				*dest = *src;
+			
+			*dest = '\0';
 			return ptr;
 		}
 

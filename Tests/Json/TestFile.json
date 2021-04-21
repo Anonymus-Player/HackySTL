@@ -1,0 +1,22 @@
+{
+    "Cow": "milk",
+    "gold": 5000,
+    "primes": [2, 3, 5, 7, 11, 13, 23],
+    "Unicode": "‏蛋‎‎‎‎‎‎‎‎‎‎‎‎‎‎‎",
+    "MontyPython": "import pickle",
+    "LoS": [
+        {
+            "name": "A",
+            "age": 10
+        },
+        {
+            "name": "B",
+            "age": 20
+        }
+    ],
+    "SoA": {
+        "name": ["A", "B"],
+        "age": [10, 20]
+    },
+    "primitives": [null, true, false]
+}

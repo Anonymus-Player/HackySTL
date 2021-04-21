@@ -1,14 +1,14 @@
 #include <stdio.h>
-#include "../../cpp/Functional.hpp"
+#include <Functional.hpp>
 
 static int func(int a)
 {
     return a;
 }
 
-static const auto& func2(auto& val)
+template <typename T>
+static void func2(T& val)
 {
-    return val;
 }
 
 struct counter {
@@ -18,12 +18,17 @@ struct counter {
     {
         return c++;
     }
+
+    int call()
+    {
+        return 33;
+    }
 };
 
 int main()
 {
-    int b = 5;
-    hsd::function val = func2<int>;
+    counter b = 5;
+    hsd::function/*<void(counter&)>*/ val = func2<counter>;
     val(hsd::reference(b)).unwrap();
 
     hsd::function<int()> f3;
@@ -32,6 +37,8 @@ int main()
         hsd::function f = func;
         auto f2 = f;
         f3 = hsd::bind(func, hsd::make_tuple(5));
+        auto f22 = hsd::bind(&counter::call, b);
+        printf("%d\n", f22());
     }
 
     printf("%d\n", f3().unwrap());

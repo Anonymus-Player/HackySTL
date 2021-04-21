@@ -8,7 +8,7 @@ static void MapBufAlloc(benchmark::State& state)
     for(auto _ : state)
     {
         hsd::buffered_allocator<hsd::uchar> alloc{buf, 4096};
-        hsd::unordered_map<size_t, size_t, hsd::fnv1a<size_t>, hsd::buffered_allocator> map{alloc};
+        hsd::unordered_map<size_t, size_t, hsd::hash<size_t, size_t>, hsd::buffered_allocator> map{alloc};
 
         [&]<size_t... Ints>(hsd::index_sequence<Ints...>)
         {
@@ -23,7 +23,7 @@ static void MapHeapAlloc(benchmark::State& state)
 {
     for(auto _ : state)
     {
-        hsd::unordered_map<size_t, size_t, hsd::fnv1a<size_t>> map;
+        hsd::unordered_map<size_t, size_t, hsd::hash<size_t, size_t>> map;
 
         [&]<size_t... Ints>(hsd::index_sequence<Ints...>)
         {

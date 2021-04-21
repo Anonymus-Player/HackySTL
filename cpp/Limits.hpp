@@ -143,7 +143,7 @@ namespace hsd
         static constexpr f128 max = 1.7976931348623157e+308l;
         #else
         static constexpr f128 min = 3.36210314311209350626e-4932l;
-        static constexpr f128 max = 1.18973149535723176502e+4932l
+        static constexpr f128 max = 1.18973149535723176502e+4932l;
         #endif
         static constexpr bool is_signed = true;
         static constexpr i32 digits = 64;

@@ -1,15 +1,17 @@
-# HackySTL
+<p align = 'left'>
+  <img src='https://cdn.discordapp.com/attachments/809046217370763274/818426647753654302/HackySTLlogo2.png'>
+</p>
 
-This was a repo for hacky examples, but because more STL classes appeared it was transformed
-into a stdlib implementation for C++ primarly, but we don't descourage implentation for STL 
-in other langs (please note you have to use the apropriate directory for the lang in which
-you want to implement for). 
+This is a multilingual project which discards any backwards compatibility 
+thus, it's written using the latest version of the language standard
 The Idea came from another [project](https://github.com/LegatAbyssWalker/amazingCode) 
 
 # Goal:
-  To implement every single item from stdlib, you can however implement things that are not standard
-  in a non-standard way, like: DefaultArg, `get` inside `tuple` or compile-time `for` loops
+  To have implemented a bare minimum of useful features
   
 # Contributors:
   DeKrain
   qookie
+
+# Platforms
+  [Discord](https://discord.gg/c68PPWrYW7)

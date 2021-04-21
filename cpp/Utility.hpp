@@ -6,11 +6,22 @@
 
 namespace hsd
 {
-    #define HSD_ENABLE_IF(...) hsd::enable_if_t<(__VA_ARGS__), hsd::i32> = 0
-    #define HSD_DISABLE_IF(...) hsd::disable_if_t<(__VA_ARGS__), hsd::i32> = 0
+    #define HSD_CPP17_NOT_REQUIRES(Cond) hsd::disable_if_t<Cond, hsd::i32> = 0
+    #define HSD_CPP17_REQUIRES(Cond) hsd::enable_if_t<Cond, hsd::i32> = 0
+
+    #define HSD_ENABLE_IF_ALL(...) HSD_CPP17_REQUIRES(hsd::conjunction<(__VA_ARGS__)>::value)
+    #define HSD_DISABLE_IF_ALL(...) HSD_CPP17_NOT_REQUIRES(hsd::conjunction<(__VA_ARGS__)>::value)
+    #define HSD_ENABLE_IF_SOME(...) HSD_CPP17_REQUIRES(hsd::disjunction<(__VA_ARGS__)>::value)
+    #define HSD_DISABLE_IF_SOME(...) HSD_CPP17_NOT_REQUIRES(hsd::disjunction<(__VA_ARGS__)>::value)
 
     template <typename T>
     static constexpr remove_reference_t<T>&& move(T&& val)
+    {
+        return static_cast<remove_reference_t<T>&&>(val);
+    }
+
+    template <typename T>
+    static constexpr remove_reference_t<T> release(T&& val)
     {
         return static_cast<remove_reference_t<T>&&>(val);
     }
@@ -25,19 +36,6 @@ namespace hsd
     static constexpr T&& forward(remove_reference_t<T>&& val)
     {
         return static_cast<T&&>(val);
-    }
-
-    template < typename T, typename... Args >
-    static constexpr void construct_at(T* ptr, Args&&... args)
-    {
-        if(std::is_constant_evaluated())
-        {
-            (*ptr) = T{forward<Args>(args)...};
-        }
-        else
-        {
-            new (ptr) T{forward<Args>(args)...};
-        }
     }
 
     template <class T, class U = T>
@@ -138,5 +136,17 @@ namespace hsd
             first++;
         }
         return dest;
+    }
+
+    template < typename Elem, usize Count >
+    static constexpr Elem* begin(Elem (&arr)[Count])
+    {
+        return static_cast<Elem*>(arr);
+    }
+
+    template < typename Elem, usize Count >
+    static constexpr Elem* end(Elem (&arr)[Count])
+    {
+        return static_cast<Elem*>(arr) + Count;
     }
 }
