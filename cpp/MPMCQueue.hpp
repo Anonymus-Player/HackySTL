@@ -25,6 +25,8 @@ namespace hsd
             {
                 destroy();
             }
+            
+            hsd::atomic_usize ticket = {0};
 
             slot() requires (std::is_default_constructible_v<T>)
                 : storage{}
