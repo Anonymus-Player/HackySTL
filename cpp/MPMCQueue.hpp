@@ -26,8 +26,6 @@ namespace hsd
                 destroy();
             }
             
-            hsd::atomic_usize ticket = {0};
-
             slot() requires (std::is_default_constructible_v<T>)
                 : storage{}
             {}
@@ -58,7 +56,7 @@ namespace hsd
                 return *this;
             }
 
-            
+            atomic_usize ticket = {0};
             T storage;
         };
     }

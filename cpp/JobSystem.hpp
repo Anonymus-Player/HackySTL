@@ -10,7 +10,7 @@ namespace hsd
 
     using job_fn = function<void(Job)>;
 
-    // A Job. Stores a funciton and a pointer to data to pass as args
+    // A Job. Stores a function and a pointer to data to pass as args
     struct Job
     {
         job_fn task = job_fn();
@@ -64,15 +64,15 @@ namespace hsd
                 {
                     if(_high_priority.try_pop(_job))
                     {
-                        _job.task(_job);
+                        _job.task(_job).unwrap();
                     }
                     else if(_normal_priority.try_pop(_job))
                     {
-                        _job.task(_job);
+                        _job.task(_job).unwrap();
                     }
                     else if(_low_priority.try_pop(_job))
                     {
-                        _job.task(_job);
+                        _job.task(_job).unwrap();
                     }
                 }
             }
@@ -118,12 +118,12 @@ namespace hsd
             }
 
             // Returns a Job which may be scheduled.
-            static Job create_job(job_fn jobfunction, void** data = nullptr)
+            static Job create_job(job_fn job_function, void** data = nullptr)
             {
-                return Job{
-                    .task = jobfunction,
-                    .data = data
-                };
+                Job _job;
+                _job.task = move(job_function);
+                _job.data = data;
+                return _job;
             }
 
             // Schedules a job to be added to the queue. Optionally accepts a priority for the job
@@ -160,17 +160,17 @@ namespace hsd
                         Job _job;
                         if(_high_priority.try_pop(_job))
                         {
-                            _job.task(_job);
+                            _job.task(_job).unwrap();
                             _counter--;
                         }
                         else if(_normal_priority.try_pop(_job))
                         {
-                            _job.task(_job);
+                            _job.task(_job).unwrap();
                             _counter--;
                         }
                         else if(_low_priority.try_pop(_job))
                         {
-                            _job.task(_job);
+                            _job.task(_job).unwrap();
                             _counter--;
                         }
                     }
@@ -180,7 +180,9 @@ namespace hsd
         };
     }
 
-    // Global Job System. It is not recommended to make a new one, as the threads last for the lifetime of the program (global)
+    // Global Job System. It is not recommended
+    // to make a new one, as the threads last
+    // for the lifetime of the program (global)
     static inline priv::JobSystem job_system;
     
 }
