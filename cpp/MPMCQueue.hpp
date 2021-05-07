@@ -152,6 +152,11 @@ namespace hsd
             }
         }
 
+        bool try_push(T& value) noexcept
+        {
+            return try_emplace(value);
+        }
+
         void emplace(T&& value)
         {
             auto const head = _head.fetch_add(1);
@@ -175,9 +180,15 @@ namespace hsd
             slot.ticket.store(turn(tail) * 2 + 2);
         }
 
+        void push(T& value)
+        {
+            emplace(value);
+        }
+
     private:
         usize _capacity;
 
+        // @TODO: Improvement: make the constructor constexpr for ``capacity`` and replace vector with an array
         vector<priv::slot<T>> _allocation;
 
         atomic_usize _head = {0};

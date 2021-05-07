@@ -27,6 +27,7 @@ int main()
         print();
     });
 
+
     // Schedules 10 jobs
     for(int i = 0; i < 10; i++)
     {
@@ -55,7 +56,7 @@ int main()
 
     }, data);
 
-    for(int i = 0; i < 10; ++i)
+    for(int i = 0; i < 100; ++i)
     {
         hsd::job_system.schedule_job(j);
     }

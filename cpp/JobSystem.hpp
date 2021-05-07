@@ -8,14 +8,20 @@ namespace hsd
 {
     struct Job;
 
-    using job_fn = void(*)(Job);
+    using job_fn = function<void(Job)>;
 
-    // A Job. Has a function ptr and a pointer to data to pass as args
+    // A Job. Stores a funciton and a pointer to data to pass as args
     struct Job
     {
-        job_fn task;
+        job_fn task = job_fn();
         void** data = nullptr;
 
+        Job() noexcept = default;
+	    Job(Job&&) noexcept = default;
+	    Job(Job const&) noexcept = default;
+	    Job& operator=(Job&&) noexcept = default;
+	    Job& operator=(Job const&) noexcept = default;
+	    ~Job() noexcept = default;
     };
 
 /// @TODO: Change from using a void** to pass args (which is super bad and unsafe), to this JobData struct
