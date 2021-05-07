@@ -58,7 +58,7 @@ namespace hsd
                 return *this;
             }
 
-            atomic_usize ticket = {0};
+            
             T storage;
         };
     }
